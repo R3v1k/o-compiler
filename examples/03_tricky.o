@@ -1,6 +1,12 @@
-// 03 - Tricky cases for the lexer
-// This file is about lexemes, not about a meaningful program.
-// Every line below exists to break a naive scanner.
+/*
+ * 03 - Tricky cases for the lexer
+ *
+ * This file is about lexemes, not about a meaningful program.
+ * Every line below exists to break a naive scanner.
+ *
+ * Both comment forms of the specification are used here: this block, and
+ * the '//' lines below.
+ */
 
 class Tricky is
 
@@ -38,6 +44,9 @@ class Tricky is
         counter := this.add(local, 1)
 
         // A comment may contain @ # $ := => 1.5 class end - it is dropped.
+        /* ... and so may a block comment. It may span several lines, and
+           a second opener /* inside it is just text, because blocks do
+           not nest: the first star-slash closes the whole thing. */
         while counter.Less(10) loop
             counter := counter.Plus(1)
         end

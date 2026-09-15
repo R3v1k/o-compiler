@@ -1,0 +1,6 @@
+// Fixture: a block comment that is never closed.
+class Bad is
+    /* opened here and never closed
+    this is
+    end
+end

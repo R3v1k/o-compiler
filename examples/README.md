@@ -37,11 +37,19 @@ one reading and recorded it here. All of these need confirmation.
    (`var Identifier : Expression`), not `is` as in the examples.
 2. **Array indices are 1-based**, following the `MaxInt` example. Never stated.
 3. **`Array.Length`**, not `.Size` — the class listing wins over the example.
-4. **Comments are `//` to end of line** — used in the spec listings, never defined.
+4. **Comments are `//` to end of line, and `/* ... */` blocks** — neither is
+   defined in the grammar. `//` is used inside the library class listings in
+   section 2 of the spec, so it is certainly part of O. `/* ... */` is used
+   only once, in section 1, to comment out the generics paragraph — that is
+   the specification document annotating itself, not an O program, so this
+   one is a guess. The lexer accepts both; blocks do not nest.
 5. **`ClassName [ Arguments ]` with no arguments** is written `C()`, so that a
    bare identifier always means a name and never a construction.
-6. **Real literals** are `1.0`, `3.14`. Note that `0.Minus(1)` is then
-   ambiguous with a real literal in the lexer; we require a space or a variable.
+6. **Real literals** are `1.0`, `3.14` — a digit is required on both sides of
+   the dot. This resolves the apparent ambiguity of `0.Minus(1)` with no space
+   and no special case: the dot joins the number only when a digit follows it,
+   so `0.Minus(1)` lexes as `INT_LITERAL DOT IDENTIFIER ...` as intended.
+   There is no sign in a literal — negation is the method `UnaryMinus`.
 
 ## Questions for the lecturer
 
@@ -74,3 +82,12 @@ Ordered by how much they block us.
     type meant to be lost?
 12. **Empty return.** `return` with no expression in a method that declares a
     return type — error, or allowed?
+13. **Block comments.** Is `/* ... */` part of O, or is it only the notation the
+    specification document uses for its own annotations? If it is part of the
+    language, are blocks meant to nest? We assumed yes to the first and no to
+    the second; see convention 4 above.
+14. **`ClassName : Identifier // [ [ ClassName ] ]`.** The generic part of this
+    production is commented out, consistent with generics being out of scope —
+    yet section 3 uses `Array[Integer]`, `List[Real]` and `class C[T]`. Should
+    `[ ... ]` be accepted after a class name or rejected? (The lexer emits
+    `LBRACKET`/`RBRACKET` either way, so only the parser is affected.)

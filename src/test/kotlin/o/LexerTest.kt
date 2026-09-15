@@ -246,6 +246,55 @@ class LexerTest {
     }
 
     @Test
+    fun blockCommentIsSkipped() {
+        assertEquals(
+            listOf(TokenType.VAR, TokenType.IDENTIFIER),
+            types("var /* dropped */ x")
+        )
+    }
+
+    @Test
+    fun blockCommentSpansLines() {
+        val tokens = lex("var /* one\n two\n three */ x")
+        assertEquals(TokenType.VAR, tokens[0].type)
+        assertEquals(TokenType.IDENTIFIER, tokens[1].type)
+        // Newlines inside the comment still advance the line counter.
+        assertEquals(3, tokens[1].line)
+        assertEquals(11, tokens[1].column)
+    }
+
+    @Test
+    fun blockCommentsDoNotNest() {
+        // The first '*/' closes the block; the second opener is plain text.
+        assertEquals(listOf(TokenType.END), types("/* outer /* inner */ end"))
+    }
+
+    @Test
+    fun blockCommentContentIsNeverTokenized() {
+        assertEquals(emptyList(), types("/* @ # $ := => 1.5 class // still inside */"))
+    }
+
+    @Test
+    fun lineCommentSwallowsABlockOpener() {
+        // Inside a '//' comment, '/*' has no special meaning.
+        assertEquals(listOf(TokenType.END), types("// /* not a block\nend"))
+    }
+
+    @Test
+    fun unterminatedBlockCommentIsALexicalError() {
+        val e = assertFailsWith<LexerException> { lex("class A is\n    /* never closed\nend") }
+        // Reported where the block was opened, not at the end of the file.
+        assertEquals(2, e.line)
+        assertEquals(5, e.column)
+        assertTrue("Unterminated" in e.message!!, "unexpected message: ${e.message}")
+    }
+
+    @Test
+    fun starSlashOutsideACommentIsALexicalError() {
+        assertFailsWith<LexerException> { lex("end */") }
+    }
+
+    @Test
     fun singleSlashIsNotAComment() {
         // '/' is not a token of O, so a lone slash is a lexical error
         // rather than the silent start of a comment.
@@ -379,6 +428,60 @@ class LexerTest {
         assertEquals(1, tokens.count { it.type == TokenType.ASSIGN })
         assertEquals(4, tokens.count { it.type == TokenType.COLON })
         assertEquals(2, tokens.count { it.type == TokenType.COMMA })
+    }
+
+    // ------------------------------------------- snippets from the specification
+
+    @Test
+    fun specSection3SnippetsLex() {
+        // Copied from section 3 of the language specification. Several of them
+        // are not derivable from the grammar (see examples/11_probe_spec_examples.o),
+        // but every one of them must still tokenize.
+        val snippets = listOf(
+            "var a : Array[Integer](10)",
+            "a.set(i) := 55",
+            "x := a.get(i.Plus(1))",
+            "var i is 1",
+            "while i.LessEqual(a.Size) loop end",
+            "class C[T] is var m : T end",
+            "var k : List[Real]",
+            "var b : true",
+            "var x : Base(1,2)",
+            "x := Derived(3)",
+            "var max : Integer.Min",
+            "method MaxInt(a: Array[Integer]) : Integer is end"
+        )
+        for (snippet in snippets) {
+            val tokens = lex(snippet)
+            assertEquals(TokenType.EOF, tokens.last().type, "failed to lex: $snippet")
+            assertTrue(tokens.size > 1, "no tokens for: $snippet")
+        }
+    }
+
+    @Test
+    fun methodCallOnZeroLiteralIsNotAReal() {
+        // The spec's '0.Minus(1)' needs no special case: the dot is only
+        // absorbed before a digit.
+        assertEquals(
+            listOf(
+                TokenType.INT_LITERAL, TokenType.DOT, TokenType.IDENTIFIER,
+                TokenType.LPAREN, TokenType.INT_LITERAL, TokenType.RPAREN
+            ),
+            types("0.Minus(1)")
+        )
+    }
+
+    @Test
+    fun thereIsNoSignInANumericLiteral() {
+        // Negation in O is the method UnaryMinus, so '-' is not a token.
+        assertFailsWith<LexerException> { lex("var x : -5") }
+    }
+
+    @Test
+    fun libraryClassNamesAreOrdinaryIdentifiers() {
+        for (name in listOf("Integer", "Real", "Boolean", "Array", "List", "Class", "AnyValue", "AnyRef")) {
+            assertEquals(listOf(TokenType.IDENTIFIER), types(name), "'$name' must not be a keyword")
+        }
     }
 
     // -------------------------------------------------------- file fixtures

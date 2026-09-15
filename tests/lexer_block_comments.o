@@ -1,0 +1,10 @@
+/*
+ * Fixture: block comments, as used in the language specification itself.
+ * They may span lines and may contain @ # $ := => 1.5 class end.
+ */
+class Blocks is
+    var x /* inline */ : 1
+    /* not /* nested: the first star-slash closes this one */
+    this is
+    end
+end

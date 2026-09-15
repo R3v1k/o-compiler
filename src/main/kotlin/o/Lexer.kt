@@ -43,6 +43,7 @@ class Lexer(private val source: String) {
             val c = peek()
             when {
                 c == '/' && peekNext() == '/' -> skipLineComment()
+                c == '/' && peekNext() == '*' -> skipBlockComment()
                 c.isWhitespace() -> advance()
                 c.isDigit() -> readNumber()
                 isIdentifierStart(c) -> readIdentifierOrKeyword()
@@ -165,6 +166,40 @@ class Lexer(private val source: String) {
     /** Drops `// ...` up to (but not including) the line terminator. */
     private fun skipLineComment() {
         while (!isAtEnd() && peek() != '\n') {
+            advance()
+        }
+    }
+
+    /**
+     * Drops a slash-star ... star-slash block, which may span any number of
+     * lines.
+     *
+     * Blocks do not nest: the first star-slash closes the comment, so a second
+     * opener inside a block is just ordinary comment text. Reaching the end of
+     * the file with the block still open is a lexical error reported at the
+     * position where the block was *opened* — that is the line the author has
+     * to go and fix, not the last line of the file.
+     */
+    private fun skipBlockComment() {
+        val startLine = line
+        val startColumn = column
+        advance() // '/'
+        advance() // '*'
+
+        while (true) {
+            if (isAtEnd()) {
+                throw LexerException(
+                    "Unterminated block comment opened at line $startLine, column $startColumn " +
+                        "(expected a closing '*/')",
+                    startLine,
+                    startColumn
+                )
+            }
+            if (peek() == '*' && peekNext() == '/') {
+                advance()
+                advance()
+                return
+            }
             advance()
         }
     }
