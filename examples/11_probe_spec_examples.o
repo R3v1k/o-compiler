@@ -1,0 +1,31 @@
+// 11 - PROBE: the specification's own examples do not parse
+// Every line below is copied verbatim from section 3 of the language
+// description. None of them is derivable from the grammar in section 1.
+// This file is not meant to compile; it is the evidence list.
+
+// (a) Grammar says  VariableDeclaration : var Identifier : Expression
+//     but the examples use 'is' instead of ':'
+var i is 1
+
+// (b) Assignment : Identifier := Expression
+//     The left side can only be a plain identifier, so this is not
+//     derivable -- and semantically 'set' returns nothing anyway.
+a.set(i) := 55
+
+// (c) Array declares 'method Length : Integer', but the example uses .Size
+while i.LessEqual(a.Size) loop
+end
+
+// (d) Missing receiver: 'get(i)' with no object, inside a method that
+//     is not a member of Array
+max := get(i)
+
+// (e) ClassDeclaration has no place for type parameters, yet:
+class C[T] is
+    var m : T
+end
+
+// (f) MaxInt is declared at file level, but Program is defined as
+//     { ClassDeclaration } only -- free-standing methods are impossible
+method MaxInt(a: Array[Integer]) : Integer is
+end

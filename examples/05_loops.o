@@ -1,0 +1,45 @@
+// 05 - While loop
+// The conditional loop is the only loop form in the language.
+// The condition is evaluated before every iteration.
+
+class Loops is
+
+    method factorial(n: Integer) : Integer is
+        var acc : Integer(1)
+        var i : Integer(1)
+        while i.LessEqual(n) loop
+            acc := acc.Mult(i)
+            i := i.Plus(1)
+        end
+        return acc
+    end
+
+    method gcd(a: Integer, b: Integer) : Integer is
+        var x : a
+        var y : b
+        while y.Greater(0) loop
+            var t : y
+            y := x.Rem(y)
+            x := t
+        end
+        return x
+    end
+
+    // Nested loops
+    method countPairs(n: Integer) : Integer is
+        var total : Integer(0)
+        var i : Integer(1)
+        while i.LessEqual(n) loop
+            var j : Integer(1)
+            while j.LessEqual(n) loop
+                total := total.Plus(1)
+                j := j.Plus(1)
+            end
+            i := i.Plus(1)
+        end
+        return total
+    end
+
+    this is
+    end
+end

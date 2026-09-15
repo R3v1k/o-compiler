@@ -1,0 +1,11 @@
+// Fixture: keywords vs identifiers that merely start with one.
+class Keywords is
+    var isEven : true
+    var classroom : 1
+    var endless : false
+    var variable : 0
+    var thistle : 2
+    method ifThenElse(loopCount: Integer) : Integer => loopCount
+    this is
+    end
+end

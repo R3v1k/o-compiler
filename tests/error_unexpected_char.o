@@ -1,0 +1,6 @@
+// Fixture: '@' is not a character of the O alphabet.
+class Bad is
+    var x : 1@2
+    this is
+    end
+end

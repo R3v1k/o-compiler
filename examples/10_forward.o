@@ -1,0 +1,30 @@
+// 10 - Forward declarations and mutual recursion
+// A method declaration without a body is a forward declaration. The
+// full declaration with the same name and signature must appear
+// somewhere later in the program.
+
+class Parity is
+
+    // Forward declaration: no body
+    method isOdd(n: Integer) : Boolean
+
+    method isEven(n: Integer) : Boolean is
+        if n.Equal(0) then
+            return true
+        end
+        // Legal because isOdd was declared forward above
+        return this.isOdd(n.Minus(1))
+    end
+
+    // Full declaration, same signature as the forward one
+    method isOdd(n: Integer) : Boolean is
+        if n.Equal(0) then
+            return false
+        end
+        return this.isEven(n.Minus(1))
+    end
+
+    this is
+        var check : this.isEven(10)
+    end
+end

@@ -1,0 +1,37 @@
+// 07 - Inheritance
+// Single inheritance. A derived class combines its own members with
+// the members of its base class. The relation is transitive.
+//
+// OPEN QUESTION: there is no syntax for invoking the base class
+// constructor from a derived constructor.
+
+class Shape is
+    var visible : Boolean(true)
+
+    method area : Real => Real(0.0)
+
+    method describe : Integer => 0
+
+    this is
+    end
+end
+
+class Rectangle extends Shape is
+    var width  : Real(1.0)
+    var height : Real(1.0)
+
+    method area : Real => width.Mult(height)
+
+    this(w: Real, h: Real) is
+        width := w
+        height := h
+    end
+end
+
+// Transitivity: Shape is also a base class of Square
+class Square extends Rectangle is
+    this(side: Real) is
+        width := side
+        height := side
+    end
+end

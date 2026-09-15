@@ -1,0 +1,37 @@
+// 08 - Polymorphism
+// A method of a derived class whose signature matches a base class
+// method overrides it. The method actually called is chosen by the
+// dynamic type of the object.
+
+class Animal is
+    method legs : Integer => 4
+    method noise : Integer => 0
+    this is
+    end
+end
+
+class Bird extends Animal is
+    method legs : Integer => 2
+    this is
+    end
+end
+
+class Penguin extends Bird is
+    method noise : Integer => 1
+    this is
+    end
+end
+
+class Zoo is
+    this is
+        // Static type Animal, dynamic type Penguin
+        var a : Animal()
+        a := Penguin()
+
+        // Resolves to Bird.legs through the dynamic type
+        var l : a.legs
+
+        // Resolves to Penguin.noise
+        var n : a.noise
+    end
+end

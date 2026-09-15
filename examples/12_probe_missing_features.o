@@ -1,0 +1,39 @@
+// 12 - PROBE: features that are promised but absent
+// This file collects constructs we need but cannot express.
+
+class Gaps is
+
+    // (a) NO INPUT/OUTPUT. Slide P5 lists input/output among the
+    //     statements, but the grammar has no such statement and no
+    //     library class provides it. Without it, no test program can
+    //     produce an observable result.
+    //     Wanted, but not expressible:
+    //         print(x)
+
+    // (b) NO STRING TYPE. The library hierarchy has Integer, Real,
+    //     Boolean, Array, List -- nothing textual.
+    //         var name : "hello"
+
+    // (c) NO EXPRESSION STATEMENT. A call to a method returning nothing
+    //     cannot appear anywhere: Statement covers only assignment,
+    //     while, if and return.
+    //         someObject.mutate()
+
+    // (d) NO SUPER CONSTRUCTOR CALL and no way to reach an overridden
+    //     base method.
+    //         super(1, 2)
+
+    // (e) NO 'null' / empty reference, so a reference member variable
+    //     has nothing to be initialized with -- yet every variable
+    //     declaration requires an initializer.
+    //         var next : null
+
+    // (f) Integer.Min and Integer.Max are declared as 'var' inside the
+    //     class, so they look like instance fields, but they are used
+    //     as class-level constants:
+    //         var max : Integer.Min
+    //     There is no static member concept in the language.
+
+    this is
+    end
+end

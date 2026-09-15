@@ -1,0 +1,29 @@
+// 09 - Method overloading
+// Several methods in one class may share a name if they differ in the
+// number or types of their parameters. The compiler picks the method
+// by comparing the argument list against each candidate signature.
+
+class Printer is
+
+    method show(v: Integer) : Integer => v
+    method show(v: Real) : Real => v
+    method show(v: Boolean) : Boolean => v
+
+    method show(a: Integer, b: Integer) : Integer => a.Plus(b)
+    method show(a: Integer, b: Integer, c: Integer) : Integer
+        => a.Plus(b).Plus(c)
+
+    this is
+        var i : Integer(1)
+        var r : Real(1.0)
+
+        var x : this.show(i)        // show(Integer)
+        var y : this.show(r)        // show(Real)
+        var z : this.show(i, i)     // show(Integer, Integer)
+
+        // Overload resolution inside the library itself:
+        // Integer.Plus(Integer) : Integer   vs   Integer.Plus(Real) : Real
+        var p : i.Plus(i)           // Integer
+        var q : i.Plus(r)           // Real
+    end
+end

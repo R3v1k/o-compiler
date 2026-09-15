@@ -1,0 +1,33 @@
+// 03 - Variable declarations and type inference
+// A variable has no explicit type. Its type is derived from the
+// type of the initializing expression, which is therefore mandatory.
+
+class Declarations is
+
+    // Explicit constructor invocation of a library class
+    var counter : Integer(0)
+    var ratio   : Real(2.5)
+    var enabled : Boolean(true)
+
+    // Bare literal as initializer (spec examples use this form too)
+    var limit : 100
+
+    method demo : Integer is
+        // Type inferred from another variable
+        var copy : counter
+
+        // Type inferred from a method call: Integer.Plus(Integer) : Integer
+        var next : counter.Plus(1)
+
+        // Type inferred from a conversion: Integer.toReal : Real
+        var asReal : counter.toReal
+
+        // Type inferred from a relation: Boolean
+        var isSmall : counter.Less(limit)
+
+        return next
+    end
+
+    this is
+    end
+end

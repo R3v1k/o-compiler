@@ -1,0 +1,8 @@
+// Fixture: comments are dropped entirely.
+// Even ones containing @ # $ and := and =>
+class Comments is // trailing comment after code
+    var x : 1 // another one
+    // a whole line
+    this is
+    end
+end // final comment without newline

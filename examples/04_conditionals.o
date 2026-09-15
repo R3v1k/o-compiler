@@ -1,0 +1,42 @@
+// 04 - Conditional statement
+// The condition must be of type Boolean. The trailing 'end' removes
+// the dangling-else ambiguity for nested ifs.
+
+class Comparator is
+
+    method max(a: Integer, b: Integer) : Integer is
+        if a.Greater(b) then
+            return a
+        else
+            return b
+        end
+    end
+
+    // if without else
+    method absolute(n: Integer) : Integer is
+        if n.Less(0) then
+            return n.UnaryMinus
+        end
+        return n
+    end
+
+    // Nested conditionals
+    method classify(n: Integer) : Integer is
+        if n.Less(0) then
+            return 1
+        else
+            if n.Equal(0) then
+                return 2
+            else
+                return 3
+            end
+        end
+    end
+
+    // Boolean combinators are also methods
+    method inRange(n: Integer, low: Integer, high: Integer) : Boolean
+        => n.GreaterEqual(low).And(n.LessEqual(high))
+
+    this is
+    end
+end

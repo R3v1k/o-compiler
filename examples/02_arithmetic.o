@@ -1,0 +1,25 @@
+// 02 - Arithmetic without operators
+// O has no infix notation at all. Every arithmetic operation is a
+// method call on a library object: a + b * c  ==>  a.Plus(b.Mult(c))
+
+class Calculator is
+
+    var result : Integer(0)
+
+    // Short method body: single expression after =>
+    method add(a: Integer, b: Integer) : Integer => a.Plus(b)
+
+    // Full body form
+    method polynomial(x: Integer) : Integer is
+        var squared : x.Mult(x)
+        var linear : x.Mult(3)
+        return squared.Plus(linear).Plus(7)
+    end
+
+    // Mixed Integer / Real arithmetic: Integer.Plus(Real) returns Real
+    method scale(n: Integer, factor: Real) : Real => n.Mult(factor)
+
+    this is
+        result := this.polynomial(5)
+    end
+end

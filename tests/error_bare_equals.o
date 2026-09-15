@@ -1,0 +1,6 @@
+// Fixture: '=' alone is not a token; O has no infix operators.
+class Bad is
+    method f(a: Integer) : Integer = a
+    this is
+    end
+end

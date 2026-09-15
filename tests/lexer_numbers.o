@@ -1,0 +1,10 @@
+// Fixture: a dot belongs to a number only when a digit follows it.
+class Numbers is
+    var whole : 42
+    var real  : 1.5
+    var pi    : 3.14159
+    method calls : Integer => 1.Plus(2)
+    method chain : Real => 1.5.Plus(2.5)
+    this is
+    end
+end

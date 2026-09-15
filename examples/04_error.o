@@ -1,0 +1,15 @@
+// 04 - Lexical error demo
+// This file is NOT valid O. It exists to show that an illegal character
+// is reported with a position and a caret, not with a stack trace.
+//
+// The '@' in this very comment is dropped silently: comments are never
+// tokenized, so only the one in the code below is an error.
+
+class Broken is
+
+    var ok : Integer(0)
+
+    this is
+        ok := 1@2
+    end
+end

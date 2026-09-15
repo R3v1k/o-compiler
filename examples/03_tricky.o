@@ -1,0 +1,51 @@
+// 03 - Tricky cases for the lexer
+// This file is about lexemes, not about a meaningful program.
+// Every line below exists to break a naive scanner.
+
+class Tricky is
+
+    // (a) ':' and ':=' differ by exactly one character of lookahead.
+    //     A declaration uses ':' ...
+    var counter : Integer(0)
+    var ratio   : Real(2.5)
+
+    // (c) A dot joins a number only when a digit follows it immediately.
+    //     1.5       -> REAL_LITERAL
+    //     1.Plus(2) -> INT_LITERAL DOT IDENTIFIER LPAREN INT_LITERAL RPAREN
+    var real  : 1.5
+    var whole : 1
+    method onLiteral : Integer => 1.Plus(2)
+    method onReal    : Real    => 1.5.Plus(2.5)
+
+    // Keywords are looked up only after a whole word has been read,
+    // so none of the names below is a keyword.
+    var isEven    : true
+    var classroom : 1
+    var endless   : false
+    var thistle   : 2
+    method loopCount(ifs: Integer) : Integer => ifs
+
+    // (b) '=' never stands alone in O; it only occurs inside '=>'.
+    method add(a: Integer, b: Integer) : Integer => a.Plus(b)
+
+    // Brackets, commas and chained calls
+    method firstOf(a: Array[Integer]) : Integer => a.get(1).Plus(a.Length)
+
+    this is
+        var local : Integer(0)
+        // ... and an assignment uses ':=', here on the very next line
+        local := 5
+        counter := this.add(local, 1)
+
+        // A comment may contain @ # $ := => 1.5 class end - it is dropped.
+        while counter.Less(10) loop
+            counter := counter.Plus(1)
+        end
+
+        if counter.Equal(10) then
+            counter := 0
+        else
+            counter := counter.Minus(1)
+        end
+    end
+end

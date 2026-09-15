@@ -1,0 +1,7 @@
+// Fixture: ':' and ':=' must not be confused.
+class Sep is
+    var x : Integer(0)
+    this is
+        x := 5
+    end
+end

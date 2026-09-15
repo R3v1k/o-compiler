@@ -1,0 +1,4 @@
+class NoNewlineAtEnd is
+    this is
+    end
+end

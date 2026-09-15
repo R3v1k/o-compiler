@@ -1,0 +1,9 @@
+// 01 - Minimal program
+// The smallest valid O program: one class with a constructor.
+// The constructor of Main is the entry point; finishing its body
+// ends the whole program.
+
+class Main is
+    this is
+    end
+end
