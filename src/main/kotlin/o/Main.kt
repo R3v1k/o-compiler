@@ -6,22 +6,26 @@ import kotlin.system.exitProcess
 private const val RULE_WIDTH = 68
 
 /**
- * Command line driver for the lexer.
+ * Command line driver: lexes and parses one file.
  *
  * ```
- * ./gradlew run --args="examples/03_tricky.o"
+ * ./gradlew run --args="examples/08_polymorphism.o"            # AST tree
+ * ./gradlew run --args="--tokens examples/03_tricky.o"         # token table
  * ```
  *
- * Prints the token table on success; on a lexical error prints the offending
- * source line with a caret under it and exits with status 1.
+ * Prints the syntax tree on success (or, with `--tokens`, the token table of
+ * phase 1). On a lexical or syntax error prints the offending source line
+ * with a caret under it and exits with status 1.
  */
 fun main(args: Array<String>) {
-    if (args.size != 1) {
+    val tokensOnly = args.isNotEmpty() && args[0] == "--tokens"
+    val paths = if (tokensOnly) args.drop(1) else args.toList()
+    if (paths.size != 1 || paths[0].startsWith("--")) {
         printUsage()
         exitProcess(2)
     }
 
-    val file = File(args[0])
+    val file = File(paths[0])
     if (!file.isFile) {
         println()
         println("  ERROR  file not found: ${file.path}")
@@ -31,31 +35,39 @@ fun main(args: Array<String>) {
     }
 
     val source = file.readText()
-    printHeader(file)
+    printHeader(if (tokensOnly) "O LANGUAGE LEXER" else "O LANGUAGE PARSER", file)
 
     try {
         val tokens = Lexer(source).tokenize()
-        printTokenTable(tokens)
+        if (tokensOnly) {
+            printTokenTable(tokens)
+        } else {
+            printTree(Parser(tokens).parseProgram())
+        }
         exitProcess(0)
     } catch (e: LexerException) {
-        printLexicalError(file, source, e)
+        printSourceError("LEXICAL ERROR", file, source, e.line, e.column, e.message)
+        exitProcess(1)
+    } catch (e: ParseException) {
+        printSourceError("SYNTAX ERROR", file, source, e.line, e.column, e.message)
         exitProcess(1)
     }
 }
 
 private fun printUsage() {
     println()
-    println("  O language lexer")
+    println("  O language compiler front end (lexer + parser)")
     println()
-    println("  usage:  ./gradlew run --args=\"<file.o>\"")
-    println("  e.g.    ./gradlew run --args=\"examples/03_tricky.o\"")
+    println("  usage:  ./gradlew run --args=\"<file.o>\"            print the syntax tree")
+    println("          ./gradlew run --args=\"--tokens <file.o>\"   print the token table")
+    println("  e.g.    ./gradlew run --args=\"examples/08_polymorphism.o\"")
     println()
 }
 
-private fun printHeader(file: File) {
+private fun printHeader(title: String, file: File) {
     println()
     println("=".repeat(RULE_WIDTH))
-    println("  O LANGUAGE LEXER")
+    println("  $title")
     println("  source: ${file.path}")
     println("=".repeat(RULE_WIDTH))
     println()
@@ -95,25 +107,39 @@ private fun printTokenTable(tokens: List<Token>) {
     println()
 }
 
-private fun printLexicalError(file: File, source: String, e: LexerException) {
-    val lines = source.split("\n")
-    val gutter = e.line.toString().length + 2
+private fun printTree(program: Program) {
+    for (line in AstPrinter.render(program)) {
+        println("  $line")
+    }
+    println()
+    val count = program.classes.size
+    println("  $count " + if (count == 1) "class" else "classes")
+    println()
+}
 
-    println("  LEXICAL ERROR  ${file.path}:${e.line}:${e.column}")
+/**
+ * Shared by lexical and syntax errors: both exceptions carry a line and a
+ * column, so one printer serves every phase that reports a source position.
+ */
+private fun printSourceError(kind: String, file: File, source: String, line: Int, column: Int, message: String?) {
+    val lines = source.split("\n")
+    val gutter = line.toString().length + 2
+
+    println("  $kind  ${file.path}:$line:$column")
     println()
 
-    if (e.line - 1 in lines.indices) {
-        val raw = lines[e.line - 1].trimEnd('\r')
+    if (line - 1 in lines.indices) {
+        val raw = lines[line - 1].trimEnd('\r')
         // Tabs are one column for the lexer; expand them the same way in the
         // excerpt and in the caret prefix so the caret stays under the char.
         val text = raw.replace("\t", "    ")
-        val caretOffset = raw.take(e.column - 1).replace("\t", "    ").length
+        val caretOffset = raw.take(column - 1).replace("\t", "    ").length
 
-        println("  " + e.line.toString().padStart(gutter) + " | " + text)
+        println("  " + line.toString().padStart(gutter) + " | " + text)
         println("  " + " ".repeat(gutter) + " | " + " ".repeat(caretOffset) + "^")
     }
 
     println()
-    println("  ${e.message}")
+    println("  $message")
     println()
 }

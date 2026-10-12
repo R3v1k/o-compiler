@@ -1,0 +1,6 @@
+// Fixture: an argument list that is never closed.
+class Broken is
+    this is
+        var x : Integer(1
+    end
+end

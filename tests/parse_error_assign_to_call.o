@@ -1,0 +1,6 @@
+// Fixture: the left side of ':=' must be a plain identifier.
+class Broken is
+    this(a: Array[Integer]) is
+        a.set(1) := 55
+    end
+end

@@ -21,12 +21,14 @@ Target: Kotlin, hand-written lexer + recursive-descent parser, JVM bytecode via 
 | `10_forward.o` | Method header without body; mutual recursion |
 | `11_probe_spec_examples.o` | The spec's own examples that do not parse |
 | `12_probe_missing_features.o` | Constructs promised or needed but absent |
+| `13_parse_error.o` | **Parser demo**: `if` without `then`, syntax error reporting (lexes, does not parse) |
 
 Files 01–10 are the working suite. Files 11–12 are deliberately not compilable —
 they are the list of inconsistencies the project outline asks us to find.
 
 `03_tricky.o` and `04_error.o` belong to the lexer phase: they are the inputs
-shown in the phase-1 demo. See `DOCUMENTATION.md`.
+shown in the phase-1 demo. `08_polymorphism.o` and `13_parse_error.o` are the
+phase-2 (parser) demo inputs. See `DOCUMENTATION.md`.
 
 ## Conventions chosen
 
@@ -50,6 +52,32 @@ one reading and recorded it here. All of these need confirmation.
    and no special case: the dot joins the number only when a digit follows it,
    so `0.Minus(1)` lexes as `INT_LITERAL DOT IDENTIFIER ...` as intended.
    There is no sign in a literal — negation is the method `UnaryMinus`.
+
+The following were fixed when the parser was written (phase 2). Each answers
+one of the questions below for now; see `DOCUMENTATION.md`, Phase 2, for the
+grammar as implemented.
+
+7. **Expression grammar** is rewritten without left recursion as
+   `Expression : Primary { . Identifier [ Arguments ] }` and
+   `Primary : literal | this | ClassName [ Arguments ]` (question 9).
+8. **Expression statements are accepted** — an *extension* of the grammar.
+   Without them `a.set(i, v)`, which the specification itself writes and
+   `06_arrays.o` needs, cannot appear anywhere (question 2).
+9. **The assignment target is a bare identifier**, exactly as in the grammar.
+   `a.set(i) := 55` and `this.field := x` are syntax errors (question 5).
+10. **Generic type arguments are accepted where a class is *used*** —
+    `Array[Integer]` as a type, `Array[Integer](10)` as a construction — but a
+    generic class *declaration* `class C[T]` is rejected as out of scope
+    (questions 7 and 14).
+11. **No top-level methods**: a program is a sequence of classes only, as the
+    grammar says (question 8).
+12. **An empty parameter list `()` is allowed**, although the grammar's
+    `Parameters` requires at least one parameter: the library itself declares
+    `Boolean.toInteger()`.
+13. **The parser does not distinguish constructor calls from method calls.**
+    `Foo(1)` may construct a `Foo` or call a method `Foo` of the current
+    object (`get(i)`); a bare `x` may be a variable or a class. The parser
+    builds one neutral node and semantic analysis resolves it.
 
 ## Questions for the lecturer
 

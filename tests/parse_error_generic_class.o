@@ -1,0 +1,5 @@
+// Fixture: generic class declarations are out of scope.
+class C[T] is
+    this is
+    end
+end

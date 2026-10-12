@@ -1,0 +1,23 @@
+// 13 - Syntax error demo
+// This file is NOT valid O. Every character in it is legal, so it lexes
+// cleanly; the error is in the order of the tokens: the 'if' below has no
+// 'then'. The parser names what it expected, what it found instead, and
+// where the unfinished 'if' started.
+
+class Search is
+
+    method maxOf(a: Array[Integer]) : Integer is
+        var max : a.get(1)
+        var i : Integer(2)
+        while i.LessEqual(a.Length) loop
+            if a.get(i).Greater(max)
+                max := a.get(i)
+            end
+            i := i.Plus(1)
+        end
+        return max
+    end
+
+    this is
+    end
+end

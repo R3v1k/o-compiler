@@ -1,0 +1,4 @@
+// Fixture: section 3 of the specification writes 'var i is 1'.
+class Broken is
+    var i is 1
+end
