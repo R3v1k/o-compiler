@@ -511,7 +511,8 @@ class LexerTest {
         if (!dir.isDirectory) return
         val examples = dir.listFiles { f -> f.extension == "o" }?.sortedBy { it.name } ?: return
         for (file in examples) {
-            if ("error" in file.name) continue
+            // Only the lexical error demo; 13_parse_error.o lexes fine.
+            if (file.name == "04_error.o") continue
             val tokens = lex(file.readText())
             assertEquals(TokenType.EOF, tokens.last().type, "${file.name} must end with EOF")
         }

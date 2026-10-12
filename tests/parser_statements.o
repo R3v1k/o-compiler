@@ -1,0 +1,25 @@
+// Fixture: every statement form, nested.
+class Statements is
+    method run(a: Array[Integer], n: Integer) : Integer is
+        var i : 1
+        while i.LessEqual(n) loop
+            if i.Rem(2).Equal(0) then
+                a.set(i, 0)
+            else
+                if i.Greater(10) then
+                    return i
+                end
+                a.set(i, 1)
+            end
+            i := i.Plus(1)
+        end
+        return 0
+    end
+
+    method stop is
+        return
+    end
+
+    this is
+    end
+end

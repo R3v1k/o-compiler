@@ -1,0 +1,34 @@
+// Fixture: every kind of class member and both method body forms.
+class Base is
+    this is
+    end
+end
+
+class Members extends Base is
+    var field : Integer(0)
+
+    // forward declaration: header only
+    method later(n: Integer) : Integer
+
+    // short body
+    method twice(n: Integer) : Integer => n.Mult(2)
+
+    // empty parameter list, as in the library's Boolean.toInteger()
+    method zero() : Integer => Integer()
+
+    // no parameters, no return type, block body
+    method reset is
+        field := 0
+    end
+
+    method later(n: Integer) : Integer is
+        return n
+    end
+
+    this is
+    end
+
+    this(start: Integer) is
+        field := start
+    end
+end

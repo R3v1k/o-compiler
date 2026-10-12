@@ -1,0 +1,13 @@
+// Fixture: expression forms.
+class Expressions is
+    var numbers : Array[Integer](10)
+    var nested  : List[Array[Real]]()
+    var chained : numbers.get(1).Plus(numbers.Length)
+    var onInt   : 1.Plus(2)
+    var onReal  : 1.5.Plus(2.5)
+    var flag    : true.And(false)
+    var self    : this
+    var empty   : Integer()
+    this is
+    end
+end

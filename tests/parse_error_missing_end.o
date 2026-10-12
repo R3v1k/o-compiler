@@ -1,0 +1,8 @@
+// Fixture: the while loop is never closed.
+class Broken is
+    this is
+        var i : 0
+        while i.Less(3) loop
+            i := i.Plus(1)
+    end
+end
