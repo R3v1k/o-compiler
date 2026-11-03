@@ -1,0 +1,17 @@
+// --passes=fold,conditional: retain only the selected branch's statements.
+class IfSimplification is
+    method answer() : Integer is
+        var result : 0
+        if 3.Less(5) then
+            var branchValue : 10
+            result := branchValue
+        else
+            result := 20
+        end
+        // This declaration belongs to the surrounding method scope.
+        var branchValue : 1
+        return result.Plus(branchValue)
+    end
+    this is
+    end
+end

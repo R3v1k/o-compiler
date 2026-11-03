@@ -1,0 +1,12 @@
+// --passes=fold: literal built-in calls become literal AST nodes.
+class ConstantFolding is
+    method arithmetic() : Integer => 2.Plus(3.Mult(4))
+    method relation() : Boolean => 3.Less(5)
+    method logic() : Boolean => true.And(false).Not()
+    method realArithmetic() : Real => 1.5.Plus(2.5)
+
+    // A possible runtime failure must remain a call.
+    method unsafeDivision() : Integer => 1.Div(0)
+    this is
+    end
+end

@@ -1,0 +1,7 @@
+// The initializer fixes counter's type as Integer; Boolean is incompatible.
+class TypeError is
+    this is
+        var counter : 0
+        counter := true
+    end
+end

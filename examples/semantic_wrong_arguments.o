@@ -1,0 +1,7 @@
+// The method exists, but its only overload needs one Integer argument.
+class WrongArguments is
+    method pick(n: Integer) : Integer => n
+    this is
+        var result : this.pick()
+    end
+end

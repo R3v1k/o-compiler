@@ -1,15 +1,17 @@
-# Project O — Phase 1: Lexical Analyzer, Phase 2: Syntax Analyzer
+# Project O — Lexical, Syntax, and Semantic Analysis; AST Optimization
 
 Compiler Construction course, Innopolis University.
 Language **O**, implementation in Kotlin on the JVM.
 
-This document covers the first two phases of the compiler:
+This document covers the first three phases of the compiler:
 
 * **Phase 1 — lexical analysis**, sections 1–11.
 * **Phase 2 — syntax analysis**, sections 12–19.
+* **Phase 3 — semantic analysis and AST optimization**, sections 20–24.
 
-The Phase 1 text is unchanged except where Phase 2 changed a fact it states
-(the project layout, the command line, the test counts); those places say so.
+Sections 1–19 retain the earlier phases' design and demonstration material.
+Their 104-test count is the baseline before Phase 3. Current commands, semantic
+conventions, optimization behavior, and verification are documented below.
 
 ---
 
@@ -108,7 +110,7 @@ o-compiler/
 ├── gradlew / gradlew.bat         Gradle wrapper — no local Gradle needed
 ├── .gitignore                    Notably un-ignores examples/*.o and tests/*.o,
 │                                 since '*.o' is normally a C object file
-├── DOCUMENTATION.md              This document (phases 1 and 2)
+├── DOCUMENTATION.md              This document (phases 1–3)
 ├── docs/
 │   └── Project-O-specification.pdf   The course hand-out this phase
 │                                 implements; section 5 below maps its grammar
@@ -1432,7 +1434,7 @@ branch in a `when`; the drawing code never changes.
 ./gradlew test
 ```
 
-104 tests in total: the 51 lexer tests of phase 1, all still passing, and 53
+The Phase 2 baseline was 104 tests in total: 51 lexer tests and 53
 in `src/test/kotlin/o/ParserTest.kt`:
 
 | Group | What is asserted |
@@ -1453,3 +1455,219 @@ parses as written.
 As in phase 1, the fixture tests walk the `tests/` directory, so adding a
 `parser_*.o` or `parse_error_*.o` file adds a test case without touching any
 Kotlin. See `tests/README.md`.
+
+---
+
+## 20. Phase 3 — semantic analysis
+
+Phase 3 adds symbol resolution, nominal type checking, contextual validation,
+and four conservative AST optimizations. The compiler pipeline is now:
+
+```text
+source -> Lexer -> Parser -> original Program
+                              |
+                      SemanticAnalyzer
+                       /           \
+              diagnostics        SemanticModel
+              (stop on errors)       |
+                                  Optimizer
+                                     |
+                               optimized Program
+```
+
+The parser's grammar and AST remain unchanged. Semantic checks use separate
+state and do not mutate the input. Optimizations reconstruct immutable trees
+and require valid input, including code that a later pass would discard. The
+CLI retains the original AST so both versions can be printed together.
+
+| Source | Responsibility |
+|---|---|
+| `SemanticModel.kt` | `OType`, positioned diagnostics/results/exceptions, lexical scopes, symbols, and external expression-type information |
+| `Builtins.kt` | Predefined class hierarchy and explicit library signatures |
+| `SemanticAnalyzer.kt` | Declaration collection, inheritance, resolution, type checking, returns, and diagnostics |
+| `Optimizer.kt` | Four individually callable transformations and combined fixed-point pipeline |
+| `Main.kt` | Existing parser/token modes plus analysis and optimization options |
+| `scripts/verify_phase3.py` | Process-level demonstration and exit-code verification |
+
+### 20.1 Analysis API
+
+```kotlin
+val original = Parser(Lexer(source).tokenize()).parseProgram()
+val result = SemanticAnalyzer().analyze(original)
+for (diagnostic in result.diagnostics) println(diagnostic)
+result.requireSuccess()  // throws SemanticException on invalid input
+val optimized = Optimizer().optimize(original)
+```
+
+`SemanticResult.isSuccess` is true exactly when no diagnostics were produced.
+`SemanticModel.typeOf(expr)` exposes a resolved type for an expression visited
+by analysis. Expression keys use identity, so structurally equal expressions
+at different places retain independent analysis entries. `isAssignable`
+checks exact types and the transitive parent relation, with invariant generic
+arguments. The internal error type is diagnostic recovery, not an unknown
+type accepted as valid.
+
+### 20.2 Checks implemented
+
+Analysis collects classes and signatures before bodies, validates unknown
+parents and inheritance cycles, then infers fields and traverses routines.
+Lexical scopes resolve parameters and locals; inherited lookup resolves fields
+and methods. The analyzer detects:
+
+* undefined variables and assignment targets; missing methods/classes; unknown
+  parameter/return/type-argument types; invalid generic arity;
+* duplicate classes, fields, locals, parameters, method signatures, constructor
+  signatures, and forward declarations; unresolved/conflicting forward headers;
+* incompatible assignments, initializers without values, non-Boolean if/while
+  conditions, bad argument counts/types, and ambiguous overloads;
+* incompatible or missing return values, value returns from constructors or
+  methods without a declared result, and value methods with falling-through paths;
+* unknown/cyclic inheritance, invalid override result types, invalid callable
+  expressions, and direct field reads before initialization.
+
+Methods are selected by argument arity and assignability, then by a unique
+most-specific applicable signature. Overriding uses the same parameter
+signature with a compatible result type; overriding candidates hide that
+signature from ancestors. An arbitrary loop does not prove a value method
+returns. A literal conditional can select a returning path, and a general
+if/else proves return only when both branches do.
+
+## 21. Semantic conventions and implementation boundaries
+
+The PDF leaves several details unspecified. Phase 3 adopts these explicit
+conventions while preserving the grammar described in sections 14–16:
+
+| Topic | Implemented convention |
+|---|---|
+| Variable types | Inferred once from the mandatory initializer. A declaration's colon is not a type annotation. |
+| Local order/scope | The initializer sees the existing scope; the new name is inserted afterward. Branches and loops have child scopes. Same-scope duplicates fail; nested shadowing is allowed. Parameters and the routine's outer body share a scope. |
+| Field order | Direct same-class reads in a field initializer must refer to earlier fields. Methods may use class fields independently of textual member order. |
+| Class and method references | Class/signature collection makes later declarations visible. Forward headers require one matching body; calls to later complete methods are supported. |
+| Default user parent | A user class without `extends` derives from library `AnyRef`. |
+| Constructors | User classes without a constructor receive a default no-argument signature. Numeric/Boolean library default constructors are also accepted to retain existing conventions. Explicit constructors are checked by signature. |
+| No return annotation | Means no returned value. A constructor may use a bare return; a value return is rejected. |
+| Numeric compatibility | No implicit Integer/Real assignment conversion. Mixed numeric library overloads and explicit constructors/conversions are supported. |
+| Bare members | A field read or zero-argument method invocation; calls with `()` are also supported. |
+| Ambiguous bare names | Locals/fields take precedence, then current-object methods, then class construction. Use `this.method(...)` to explicitly name a method that shares a class name. |
+| Class names as values | Rejected except the documented numeric library constants, for example `Integer.Min`; construct objects with `C(...)`. |
+| Collection types | Built-in `Array[T]`/`List[T]` require one resolved type argument. Arguments are invariant; `get`, `set`, `head`, `tail`, `append`, `Length`, and conversion signatures retain element types. |
+| Library class names | Predefined classes cannot be redeclared by user code. |
+| Expression statements | Remain the parser's extension; expressions are checked and void calls are permitted in statement position. |
+
+Library numeric and Boolean signatures follow section 2 of the PDF. Numeric
+`Min`/`Max` and Real `Epsilon` are readable library constants, including through
+class names. These are semantic signatures, not runtime implementations.
+
+General user-defined generics, generic inheritance, I/O, strings, null,
+base-constructor invocation, static array-bounds proofs, whole-program effects,
+and code generation are not implemented. Field-order checking is a direct
+syntactic check; it does not prove absence of indirect initialization effects
+through arbitrary method calls. The project validates static dispatch
+signatures but has no execution engine for demonstrating runtime dispatch.
+
+## 22. AST optimization passes
+
+All public pass entry points invoke semantic validation. The individual APIs
+perform one recursive pass, while `optimize` repeats selected passes in this
+canonical order until structural equality shows no further change:
+
+| CLI pass | API | Actual transformation and safeguards |
+|---|---|---|
+| `fold` | `foldConstants(program)` | Replaces recognized literal built-in arithmetic, comparison, Boolean, unary, and Integer-to-Real calls with typed literals. Recurses inside nested calls. Never evaluates arbitrary methods or constructors. |
+| `conditional` | `simplifyConditionals(program)` | Selects literal-Boolean branches, removing the unused alternative. Flattens only if the selected branch has no top-level declaration; otherwise keeps `If(true, selectedBody, null)` to retain scope. |
+| `unreachable` | `eliminateUnreachable(program)` | Removes statements following return or an if/else whose branches guarantee return; recursively handles nested statement lists. Does not infer loop termination. |
+| `unused` | `eliminateUnusedVariables(program)` | Removes only literal-initialized locals without reads or assignment references to that binding. Resolves lexical shadowing; keeps fields, constructors, arbitrary calls, and possible failures. |
+
+```kotlin
+val optimized = Optimizer().optimize(original, setOf(
+    OptimizationPass.CONSTANT_FOLDING,
+    OptimizationPass.CONDITIONAL_SIMPLIFICATION
+))
+```
+
+Integer folding checks 32-bit range; zero division/remainder and potential
+overflow retain their calls. Real values use the existing AST's binary64
+representation, but arithmetic folds only when finite and exactly
+representable under the implementation's exact-value checks. Rounded or
+nonfinite results and signed-zero-sensitive arithmetic remain calls.
+Real unary minus preserves signed zero. `Integer.toReal` folds; unspecified
+`Integer.toBoolean`, `Real.toInteger`, and `Boolean.toInteger` conversions
+remain calls.
+
+Examples: `2.Plus(3.Mult(4))` becomes `IntLit 14`, `3.Less(5)` becomes
+`BoolLit true`, and `true.And(false).Not()` becomes `BoolLit true`.
+`1.Div(0)` and `0.1.Plus(0.2)` remain calls. Folding preserves the replaced
+call's position. Fixed-point execution lets folding expose a constant branch,
+and removal of an unused local can make later safe branch flattening possible.
+No function inlining, constant propagation, or general dead-store elimination
+is attempted.
+
+## 23. Phase 3 command line and demonstrations
+
+```bash
+./gradlew clean build installDist
+./gradlew test
+python3 scripts/verify_phase3.py
+build/install/o-compiler/bin/o-compiler --help
+build/install/o-compiler/bin/o-compiler --analyze examples/semantic_valid.o
+build/install/o-compiler/bin/o-compiler --analyze examples/semantic_type_error.o
+build/install/o-compiler/bin/o-compiler --optimize --ast-before --ast-after examples/optimization_constant_folding.o
+build/install/o-compiler/bin/o-compiler --optimize --passes=fold,conditional --ast-before --ast-after examples/optimization_if_simplification.o
+```
+
+| Option | Behavior |
+|---|---|
+| `file.o` | Existing parse/tree mode |
+| `--tokens file.o` | Existing token-table mode; cannot combine with analysis flags |
+| `--help` / `-h` | Show usage and exit 0 |
+| `--analyze` | Validate and report semantic diagnostics |
+| `--optimize` | Validate, run all passes by default, print optimized tree |
+| `--ast-before` | Print the original tree; can be combined with analysis/optimization |
+| `--ast-after` | Imply optimization and print the final tree |
+| `--passes=fold,conditional,unreachable,unused` | Select a subset in canonical execution order; requires optimization |
+
+New flags may occur before or after the source path. Success/help return 0;
+input, lexical, syntax, and semantic errors return 1; invalid CLI usage returns
+2. The installed launcher exposes these statuses directly. Gradle wraps a
+failing application in its own task-failure message.
+
+Semantic diagnostics use the existing excerpt/caret presentation. For example,
+`semantic_type_error.o` reports at 5:9: `Cannot assign Boolean to variable
+'counter' of type Integer`. `semantic_wrong_arguments.o` identifies the known
+method and missing matching overload. No optimizer runs on a semantic failure.
+
+The complete lab sequence is in [`docs/PHASE3_DEMO.md`](docs/PHASE3_DEMO.md).
+[`docs/PHASE3_AUDIT.md`](docs/PHASE3_AUDIT.md) records the baseline and
+specification reconciliation. The short academic report is
+[`docs/PHASE3_REPORT.md`](docs/PHASE3_REPORT.md), with the rendered PDF at
+[`output/pdf/phase3-report.pdf`](output/pdf/phase3-report.pdf).
+[`docs/PHASE3_DEFENSE.md`](docs/PHASE3_DEFENSE.md) explains key safety choices.
+
+## 24. Phase 3 verification
+
+`./gradlew clean build installDist` passed with **278 tests, 0 failures,
+0 errors, and 0 skipped tests**. Phase 3 adds 174 tests to the original 104.
+
+| Suite | Tests |
+|---|---:|
+| Lexer | 51 |
+| Parser | 53 |
+| Semantic analyzer | 114 |
+| Scope/symbol table | 6 |
+| Optimizer | 40 |
+| CLI | 14 |
+| **Total** | **278** |
+
+Focused semantic/scope (120), optimizer (40), and CLI (14) runs also passed.
+`python3 scripts/verify_phase3.py` passed all **49 installed-CLI process
+checks**; generated transcripts are under `build/phase3-smoke/`.
+
+The original 104 tests remain unchanged. New automated tests exercise symbols,
+scopes, type compatibility, overloads, constructors, forward declarations,
+returns, inheritance, positioned diagnostics, AST nonmutation, all four
+transformations, required non-transformations, and optimizer idempotence.
+CLI tests cover old and new modes and error statuses. A test-only interpreter
+also compares selected return values and side-effect counters across original
+and optimized programs; it is not a production language runtime. The process verifier
+checks the installed launcher against shipped examples and optimization demos.
+Final executed totals and build results are recorded in the Phase 3 report.

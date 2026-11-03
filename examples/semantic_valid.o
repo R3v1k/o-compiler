@@ -1,0 +1,35 @@
+// Phase 3: inheritance, inferred variables, overloading and a forward method.
+class Counter is
+    var value : 0
+    method read() : Integer => value
+    this is
+    end
+end
+
+class NamedCounter extends Counter is
+    method doubled() : Integer => this.read().Mult(2)
+    this is
+    end
+end
+
+class SemanticDemo is
+    method twice(n: Integer) : Integer
+    method choose(n: Integer) : Integer => n
+    method choose(n: Real) : Real => n
+
+    method calculate() : Integer is
+        var counter : Counter()
+        counter := NamedCounter()
+        var result : this.twice(counter.read())
+        if result.Less(10) then
+            var increment : this.choose(1)
+            result := result.Plus(increment)
+        end
+        return result
+    end
+
+    method twice(n: Integer) : Integer => n.Mult(2)
+    this is
+        var result : this.calculate()
+    end
+end

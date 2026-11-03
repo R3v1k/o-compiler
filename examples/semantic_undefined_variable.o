@@ -1,0 +1,6 @@
+// This file parses; Phase 3 rejects the undeclared assignment target.
+class UndefinedVariable is
+    this is
+        counter := 1
+    end
+end

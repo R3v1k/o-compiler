@@ -1,0 +1,6 @@
+// Both base names resolve; the inheritance graph is cyclic.
+class First extends Second is
+end
+
+class Second extends First is
+end

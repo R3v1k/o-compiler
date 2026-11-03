@@ -1,7 +1,8 @@
 # O Language — Example Programs
 
 Test suite for the Compiler Construction project (Project O).
-Target: Kotlin, hand-written lexer + recursive-descent parser, JVM bytecode via Jasmin.
+Implemented: Kotlin lexer, recursive-descent parser, semantic analysis, and AST
+optimization. JVM bytecode via Jasmin remains a later compiler phase.
 
 ## Files
 
@@ -22,18 +23,40 @@ Target: Kotlin, hand-written lexer + recursive-descent parser, JVM bytecode via 
 | `11_probe_spec_examples.o` | The spec's own examples that do not parse |
 | `12_probe_missing_features.o` | Constructs promised or needed but absent |
 | `13_parse_error.o` | **Parser demo**: `if` without `then`, syntax error reporting (lexes, does not parse) |
+| `semantic_valid.o` | **Phase 3 valid demo**: scopes, inference, forward declarations, overloads, inheritance |
+| `semantic_undefined_variable.o` | Parses, then fails: undeclared assignment target |
+| `semantic_type_error.o` | Parses, then fails: incompatible assignment |
+| `semantic_wrong_arguments.o` | Parses, then fails: no matching method overload |
+| `semantic_inheritance_cycle.o` | Parses, then fails: indirect inheritance cycle |
+| `optimization_constant_folding.o` | Nested Integer, Real, comparison and Boolean folding; division by zero retained |
+| `optimization_if_simplification.o` | Constant branch selection with a scope-preserving wrapper |
+| `optimization_unreachable.o` | Statements after direct and conditional guaranteed returns |
+| `optimization_unused_variables.o` | Safe literal-local elimination; calls, construction, and potential failure retained |
 
-Files 01–10 are the working suite. Files 11–12 are deliberately not compilable —
-they are the list of inconsistencies the project outline asks us to find.
+Files 01–10 are the earlier working suite. File 11 deliberately fails parsing;
+file 12 records missing features in comments and parses successfully. Parsing
+does not establish semantic validity. All new `semantic_*.o` and
+`optimization_*.o` files parse; the four named invalid semantic demos fail only
+when semantic analysis is requested.
 
 `03_tricky.o` and `04_error.o` belong to the lexer phase: they are the inputs
 shown in the phase-1 demo. `08_polymorphism.o` and `13_parse_error.o` are the
 phase-2 (parser) demo inputs. See `DOCUMENTATION.md`.
 
+Phase 3 commands and expected AST changes are in
+[`docs/PHASE3_DEMO.md`](../docs/PHASE3_DEMO.md). For example:
+
+```bash
+./gradlew run --args="--analyze examples/semantic_valid.o"
+./gradlew run --args="--analyze examples/semantic_type_error.o"
+./gradlew run --args="--optimize --ast-before --ast-after examples/optimization_constant_folding.o"
+```
+
 ## Conventions chosen
 
 The specification contradicts itself in several places. Where it does, we picked
-one reading and recorded it here. All of these need confirmation.
+one reading and recorded it here. These project conventions remain documented
+choices; the open specification questions below do not block the implementation.
 
 1. **Variable declaration uses `:`**, per the grammar
    (`var Identifier : Expression`), not `is` as in the examples.
@@ -78,6 +101,11 @@ grammar as implemented.
     `Foo(1)` may construct a `Foo` or call a method `Foo` of the current
     object (`get(i)`); a bare `x` may be a variable or a class. The parser
     builds one neutral node and semantic analysis resolves it.
+
+Phase 3 semantic conventions are recorded in `DOCUMENTATION.md` section 21.
+In particular, local declarations enter scope after their initializer; nested
+blocks permit shadowing; assignments use the inferred type without implicit
+Integer/Real coercion; and an omitted return type means no returned value.
 
 ## Questions for the lecturer
 

@@ -1,0 +1,18 @@
+// --passes=unreachable: statements after guaranteed return disappear.
+class Unreachable is
+    method answer() : Integer is
+        return 42
+        var unused : 5
+    end
+
+    method choose(flag: Boolean) : Integer is
+        if flag then
+            return 1
+        else
+            return 2
+        end
+        var unreachable : 3
+    end
+    this is
+    end
+end

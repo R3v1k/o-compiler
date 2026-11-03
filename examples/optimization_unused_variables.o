@@ -1,0 +1,20 @@
+// --passes=unused: eliminate only provably harmless unused declarations.
+class UnusedVariables is
+    var touched : 0
+    method touch() : Integer is
+        touched := touched.Plus(1)
+        return touched
+    end
+
+    method answer() : Integer is
+        var removable : 7
+        var used : 42
+        // All three initializers below must remain observable.
+        var effectful : this.touch()
+        var constructed : UnusedVariables()
+        var mayFail : 1.Div(0)
+        return used
+    end
+    this is
+    end
+end
